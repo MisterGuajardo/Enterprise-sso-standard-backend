@@ -13,6 +13,9 @@ export class System {
   @Column({ name: 'descripcion', type: 'varchar', length: 255, nullable: true })
   description: string;
 
+  @Column({ name: 'url', type: 'varchar', length: 255, unique: true })
+  url: string;
+
   @CreateDateColumn({ name: 'fecha_creacion' })
   createdAt: Date;
 

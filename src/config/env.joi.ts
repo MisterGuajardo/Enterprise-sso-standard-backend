@@ -4,6 +4,7 @@ export const envValidationSchema = Joi.object({
   // App
   PORT: Joi.number().default(3000),
   CORS_ORIGINS: Joi.string().required(),
+  PORTAL_URL: Joi.string().required(),
 
   // Database
   DB_HOST: Joi.string().required(),

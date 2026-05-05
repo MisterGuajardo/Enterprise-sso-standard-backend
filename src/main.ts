@@ -4,6 +4,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser = require('cookie-parser');
+import { XssSanitizerPipe } from './common/pipes/xss-sanitizer.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -19,6 +20,7 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
+  app.useGlobalPipes(new XssSanitizerPipe());
 
   app.useGlobalPipes(
     new ValidationPipe({
