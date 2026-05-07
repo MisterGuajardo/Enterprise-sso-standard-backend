@@ -1,5 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsUrl } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsUrl, IsOptional } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class LoginDto {
   @ApiProperty({ example: 'usuario@empresa.com' })
@@ -13,8 +13,8 @@ export class LoginDto {
   @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
   password: string;
 
-  @ApiProperty({ example: 'https://sistema-cliente.com' })
+  @ApiPropertyOptional({ example: 'https://sistema-cliente.com' })
+  @IsOptional()
   @IsUrl({}, { message: 'El formato de la URL del sistema no es válido' })
-  @IsNotEmpty({ message: 'La URL del sistema es requerida para validar el acceso' })
-  systemUrl: string;
+  systemUrl?: string;
 }
