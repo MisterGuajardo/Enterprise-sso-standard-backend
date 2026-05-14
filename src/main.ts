@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser = require('cookie-parser');
 import { XssSanitizerPipe } from './common/pipes/xss-sanitizer.pipe';
+import { GlobalExceptionFilter } from './core/exceptions/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,12 +22,13 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.useGlobalPipes(new XssSanitizerPipe());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true
+      transform: true,
     }),
   );
 
@@ -36,15 +38,17 @@ async function bootstrap() {
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  
+
   logger.log(`SSO Application is successfully running on port ${port}`);
-  logger.log(`API Documentation available at: http://localhost:${port}/api/docs`);
+  logger.log(
+    `API Documentation available at: http://localhost:${port}/api/docs`,
+  );
 }
 
 bootstrap();
