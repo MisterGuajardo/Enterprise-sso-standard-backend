@@ -1,31 +1,38 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigType } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { User } from '../user/entities/user.entity';
-import { UserModule } from '../user/user.module';
+import jwtConfig from '../../core/config/jwt.config';
+import { AuthService } from './application/auth.service';
+import { ExternalIdentityAxiosAdapter } from './infrastructure/http/external-identity-axios.adapter';
+import { JwtRsaAdapter } from './infrastructure/crypto/jwt-rsa.adapter';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    HttpModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        privateKey: configService.get<string>('jwt.privateKey')!,
-        publicKey: configService.get<string>('jwt.publicKey')!,
+      inject: [jwtConfig.KEY],
+      useFactory: async (config: ConfigType<typeof jwtConfig>) => ({
         signOptions: {
-          expiresIn: configService.get<string>('jwt.accessExpiration') as any,
           algorithm: 'RS256',
+          expiresIn: config.accessExpiration as any,
         },
+        privateKey: config.privateKey,
+        publicKey: config.publicKey,
       }),
     }),
-    UserModule,
   ],
-  controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService, JwtModule],
+  providers: [
+    AuthService,
+    {
+      provide: 'IExternalIdentityProvider',
+      useClass: ExternalIdentityAxiosAdapter,
+    },
+    {
+      provide: 'ITokenProvider',
+      useClass: JwtRsaAdapter,
+    },
+  ],
+  exports: [AuthService],
 })
 export class AuthModule {}
