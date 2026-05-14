@@ -21,9 +21,9 @@ import { LoginCredentials } from '../domain/types/login-credentials.type';
 
 /**
  * Controller responsible for handling authentication-related HTTP requests.
- * 
- * This class acts as a driving adapter in the Hexagonal Architecture, 
- * receiving external HTTP requests, validating incoming payloads via DTOs, 
+ *
+ * This class acts as a driving adapter in the Hexagonal Architecture,
+ * receiving external HTTP requests, validating incoming payloads via DTOs,
  * and delegating the business logic to the application layer (AuthService).
  */
 @ApiTags('Authentication')
@@ -38,9 +38,9 @@ export class AuthController {
 
   /**
    * Endpoint to authenticate a user and issue a Single Sign-On (SSO) token.
-   * 
-   * It validates the provided credentials against an external identity provider 
-   * and sets a secure, HTTP-only cookie containing the JWT for subsequent requests 
+   *
+   * It validates the provided credentials against an external identity provider
+   * and sets a secure, HTTP-only cookie containing the JWT for subsequent requests
    * across satellite systems.
    *
    * @param {LoginDto} loginDto - The data transfer object containing the user's email and password.
@@ -51,7 +51,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Authenticate user and generate SSO token',
-    description: 'Validates credentials against an external system and returns an RSA-signed JWT. The token is also automatically set as an HttpOnly cookie.',
+    description:
+      'Validates credentials against an external system and returns an RSA-signed JWT. The token is also automatically set as an HttpOnly cookie.',
   })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({
@@ -72,10 +73,12 @@ export class AuthController {
     },
   })
   @ApiUnauthorizedResponse({
-    description: 'Invalid credentials or user not found in the external system.',
+    description:
+      'Invalid credentials or user not found in the external system.',
   })
   @ApiInternalServerErrorResponse({
-    description: 'Internal server error, configuration missing, or external system unreachable.',
+    description:
+      'Internal server error, configuration missing, or external system unreachable.',
   })
   async login(
     @Body() loginDto: LoginDto,
@@ -99,5 +102,33 @@ export class AuthController {
       message: 'Autenticación exitosa',
       token: accessToken,
     };
+  }
+
+  /**
+   * Endpoint to log out the user.
+   *
+   * It clears the HttpOnly SSO cookie, effectively ending the session
+   * across all satellite applications that depend on this provider.
+   *
+   * @param {Response} response - The Express response object used to clear the cookie.
+   * @returns A simple success message.
+   */
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Log out user',
+    description:
+      'Clears the HttpOnly authentication cookie to terminate the active session.',
+  })
+  @ApiOkResponse({ description: 'Logout successful, cookie cleared.' })
+  async logout(@Res({ passthrough: true }) response: Response) {
+    response.cookie('sso_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      expires: new Date(0),
+    });
+
+    return { message: 'Sesión cerrada exitosamente' };
   }
 }
